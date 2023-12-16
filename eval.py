@@ -14,7 +14,6 @@ from transformers import (
     AutoConfig
 )
 
-# 设置模型名和设备
 model_name = "google/mt5-small"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -23,7 +22,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 test_dataset = load_dataset("alexandrainst/nordjylland-news-summarization", split="test")
 split_dataset = DatasetDict({'test': test_dataset})
 
-# 初始化tokenizer
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 # Tokenization
@@ -36,7 +34,6 @@ def tokenize_data(data):
         "labels": label["input_ids"],
     }
 
-# 应用数据预处理
 tokenized_dataset = split_dataset.map(
     tokenize_data,
     remove_columns=['input_text', 'target_text', 'text_len', 'summary_len'],
@@ -44,13 +41,10 @@ tokenized_dataset = split_dataset.map(
     batch_size=128
 )
 
-# 加载模型
 model = AutoModelForSeq2SeqLM.from_pretrained("small_model").to(device)
 
-# 数据整合器
 data_collator = DataCollatorForSeq2Seq(tokenizer, model=model, return_tensors="pt")
 
-# 设置训练参数
 training_args = Seq2SeqTrainingArguments(
     output_dir="mt5-summarize-large",
     per_device_eval_batch_size=64,
@@ -61,8 +55,8 @@ training_args = Seq2SeqTrainingArguments(
 
 # Compute Metrics
 def compute_metrics(eval_pred):
-    rouge_metric = evaluate.load("rouge")
-    bert_metric = evaluate.load("bertscore")
+    rouge_metric = datasets.load_metric("rouge")
+    bert_metric = datasets.load_metric("bertscore")
 
     predictions, labels = eval_pred
     decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
@@ -94,7 +88,6 @@ def compute_metrics(eval_pred):
 
     return metrics
 
-# 创建trainer实例
 trainer = Seq2SeqTrainer(
     model=model,
     args=training_args,
@@ -104,7 +97,6 @@ trainer = Seq2SeqTrainer(
     tokenizer=tokenizer,
 )
 
-# 进行评估
 metrics = trainer.evaluate()
 print(metrics)
 
