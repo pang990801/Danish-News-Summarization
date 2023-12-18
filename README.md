@@ -45,6 +45,3 @@ Use use_model.py to observe the model's predictions, and use eval.py for model e
 python use_model.py
 python eval.py
 ```
-
-## Contributing
-Contributions to this project are welcome. Please discuss your proposed changes before submitting a pull request.
